@@ -42,8 +42,8 @@ client.connect(err => {
    })
 
    app.post('/addAmount', (req, res) => {
-        const {name, email, amount, month, voucher, date} = req.body;
-        amountCollection.insertOne({name: name, email:email, voucher:voucher, amount: amount, month: month, date:date})
+        const {name, email, amount, month, total, voucher, date} = req.body;
+        amountCollection.insertOne({name: name, email:email, voucher:voucher, amount: amount, total:total, month: month, date:date})
         .then(result => {           
             res.send(result.acknowledged === true)
         })
