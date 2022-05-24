@@ -44,8 +44,7 @@ client.connect(err => {
    app.post('/addAmount', (req, res) => {
         const {name, email, amount, month, voucher, date} = req.body;
         amountCollection.insertOne({name: name, email:email, voucher:voucher, amount: amount, month: month, date:date})
-        .then(result => {
-            console.log(result.acknowledged)
+        .then(result => {           
             res.send(result.acknowledged === true)
         })
    })
@@ -112,8 +111,7 @@ client.connect(err => {
     })
 
     app.put('/changeUser/:id', (req, res)=> {
-        const id = req.params.id;
-        console.log(id)
+        const id = req.params.id;        
         const {name, email, phone, address, date}= req.body;
         memberCollection.updateOne({_id: ObjectId(id)}, {$set: {name:name, email:email, phone:phone, address:address, date:date}})
     })
