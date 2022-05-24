@@ -20,6 +20,7 @@ client.connect(err => {
   const memberCollection = client.db("association").collection("user");
   const amountCollection = client.db("association").collection("amount");
   const adminCollection = client.db("association").collection("admin");
+  const expenseCollection = client.db("association").collection("expense");
    app.post('/addMember', (req, res)=> {
        const {name,email, phone, address, date} = req.body;
        memberCollection.insertOne({name, email, phone, address, date})
@@ -66,7 +67,7 @@ client.connect(err => {
    app.post('/isAdmin', (req, res) => {
        const email = req.body.email;
        adminCollection.find({ email: email})
-       .toArray((err, admin) => {
+       .toArray((err, admin) => {           
            res.send(admin?.length > 0)
        })
    })
@@ -116,7 +117,24 @@ client.connect(err => {
         memberCollection.updateOne({_id: ObjectId(id)}, {$set: {name:name, email:email, phone:phone, address:address, date:date}})
     })
    console.log('db connected')
+
+   app.post('/addExpendsAmount', (req, res) => {
+        const {name, voucher, amount,  date} = req.body;
+        expenseCollection.insertOne({name:name, voucher:voucher, amount:amount, date: date})
+        .then(result => {
+            console.log("expense : ", result)
+            res.send(result.acknowledged === true);
+        })
+   })
+
+   app.get('/expenseMoney', (req, res) => {
+        expenseCollection.find({}).toArray((err, expenseArray) => {
+           res.send(expenseArray)
+       })
+   })
+
 });
+
 
 
 
