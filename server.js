@@ -21,15 +21,16 @@ client.connect(err => {
   const amountCollection = client.db("association").collection("amount");
   const adminCollection = client.db("association").collection("admin");
   const expenseCollection = client.db("association").collection("expense");
-   app.post('/addMember', (req, res)=> {
-       const {name,email, phone, address, date} = req.body;
-       memberCollection.insertOne({name, email, phone, address, date})
+   app.post('/addMember', async(req, res)=> {       
+       const {name,email, phone, address, date, donation} = req.body;
+       await memberCollection.insertOne({name, email, phone, address, date, donation})
        .then(result => {       
             res.status(200)
             res.send(result.acknowledged === true)
             
        })
        .catch(err => console.log(err))
+     
    })
    
    app.get('/getAllUsers', (req, res)=> {
@@ -104,12 +105,14 @@ client.connect(err => {
     
     app.patch('/updateUser/:id', (req, res,)=> {
         const id = req.params.id;
-        const {name, email, phone, address, date}= req.body;
-        memberCollection.updateOne({_id: ObjectId(id)}, {$set: { name:name, email:email, phone:phone, address:address, date:date}})
+        console.log(req.body)
+        const {name, email, phone, address, date, donation}= req.body;
+        memberCollection.updateOne({_id: ObjectId(id)}, {$set: { name:name, email:email, phone:phone, address:address, date:date, donation:donation}})
         .then(result => {
             res.send(result.modifiedCount > 0);           
         })       
     })
+    
 
     app.put('/changeUser/:id', (req, res)=> {
         const id = req.params.id;        
