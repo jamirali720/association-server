@@ -56,6 +56,20 @@ client.connect(err => {
            res.send(documents);
        })
    })
+   app.get('/allAmount/:id', async(req, res) => {              
+        const query =  {_id: ObjectId( req.params.id)} 
+        const cursor =  amountCollection.find(query);
+        const result  = await cursor.toArray();
+        res.send(result)
+    
+   })
+   app.patch('/allAmount/:id', (req, res) => {      
+       const id = req.params.id;    
+       const {name, email, voucher, amount, total, month, date, updatedAt} = req.body;    
+       amountCollection.updateOne({_id: ObjectId(id)}, {$set: {name: name, email: email, voucher: voucher,amount: amount, total:total, month: month, date: date, updatedAt: updatedAt}}).then(result => {        
+           res.send(result.modifiedCount > 0)           
+       })
+   })
 
    app.post('/addAdmin', (req, res)=> {
        const email =  req.body.email;      
@@ -114,11 +128,11 @@ client.connect(err => {
     })
     
 
-    app.put('/changeUser/:id', (req, res)=> {
-        const id = req.params.id;        
-        const {name, email, phone, address, date}= req.body;
-        memberCollection.updateOne({_id: ObjectId(id)}, {$set: {name:name, email:email, phone:phone, address:address, date:date}})
-    })
+    // app.put('/changeUser/:id', (req, res)=> {
+    //     const id = req.params.id;        
+    //     const {name, email, phone, address, date}= req.body;
+    //     memberCollection.updateOne({_id: ObjectId(id)}, {$set: {name:name, email:email, phone:phone, address:address, date:date}})
+    // })
    console.log('db connected')
 
    app.post('/addExpendsAmount', (req, res) => {
