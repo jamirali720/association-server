@@ -21,6 +21,8 @@ client.connect(err => {
   const amountCollection = client.db("association").collection("amount");
   const adminCollection = client.db("association").collection("admin");
   const expenseCollection = client.db("association").collection("expense");
+  const fpCollection = client.db("fp").collection("method");
+
    app.post('/addMember', async(req, res)=> {       
        const {name,email, phone, address, date, donation} = req.body;
        await memberCollection.insertOne({name, email, phone, address, date, donation})
@@ -32,7 +34,9 @@ client.connect(err => {
        .catch(err => console.log(err))
      
    })
+
    
+
    app.get('/getAllUsers', (req, res)=> {
        memberCollection.find({}).toArray((err, documents ) => {
            if(err ) {
@@ -128,11 +132,7 @@ client.connect(err => {
     })
     
 
-    // app.put('/changeUser/:id', (req, res)=> {
-    //     const id = req.params.id;        
-    //     const {name, email, phone, address, date}= req.body;
-    //     memberCollection.updateOne({_id: ObjectId(id)}, {$set: {name:name, email:email, phone:phone, address:address, date:date}})
-    // })
+    
    console.log('db connected')
 
    app.post('/addExpendsAmount', (req, res) => {
@@ -150,13 +150,88 @@ client.connect(err => {
        })
    })
 
+   // family planning information
+   app.post("/office", async(req, res) => {
+        const result = await fpCollection.insertOne(req.body);
+        if(result.acknowledged === true) {
+            res.status(201).send({
+                success: true,
+                statusCode: 201,
+
+            })
+        }
+    })
+
+    app.get('/office', (req, res) => {
+        fpCollection.find({}).toArray((err, documents ) => {
+            if(err ) {
+                res.status(400).send(' message: Server error Occurs')
+            }
+
+            res.send(documents);
+        })
+   })
+
+    app.get('/selected/:id', async(req, res) => {
+       const result = await fpCollection.findOne({_id: ObjectId(req.params.id)})
+       res.status(200).json({result})
+   })
+
+
+    app.patch('/update/:id', (req, res) => {
+        fpCollection.updateOne({_id: ObjectId(req.params.id)},  {$set: req.body})
+        .then(result => {
+            if(result.modifiedCount > 0) {
+                res.status(200).json({
+                    success: true,
+                    message: 'Updated successfully'
+                })
+            }
+        })
+   })
+
+    app.delete('/delete/:id', (req, res) => {        
+        fpCollection.deleteOne({_id: ObjectId(req.params.id)})
+        .then(result => {              
+            if(result.deletedCount > 0) {
+                res.status(200).json({
+                    success: true,
+                    message: 'You have deleted successfully'
+                })
+               
+            }
+        })
+   })
+
+   
+    app.get('/filter', (req, res) => {       
+        const name = (req.query.name === "" || req.query.name === "All") ? {} :{name:{$regex: `${req.query.name}`, $options: "i"}}; 
+        const union =  (req.query.union == "") ? {} : {union:{$regex: `${req.query.union}`, $options: "i"}}; 
+        const unit = (req.query.unit === "" || req.query.unit === "All") ? {} : {unit:{$regex: `${req.query.unit}`, $options: "i"}}; 
+        const year = (req.query.year === "")  ? {} : {year:{$eq: `${req.query.year}`}}; 
+        const month = (req.query.month === "" || req.query.month === "All") ? {} : {month:{$regex: `${req.query.month}`, $options: "i"}} ; 
+       
+      
+        fpCollection.find({
+            $and: [name, union, unit, year, month]
+        }).toArray((err, documents ) => {
+            if(err ) {
+                res.status(400).send(' message: Server error Occurs')
+            }
+
+            res.send(documents);
+        }) 
+        
+       
+   })
+   
 });
 
 
 
 
 app.get('/', (req, res) => {
-    res.send('Ya Allah , forgive me')
+    res.json({massage: 'Ya Allah , forgive me'})
 })
 
 app.listen(port, () => {
