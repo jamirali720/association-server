@@ -217,7 +217,7 @@ client.connect(err => {
         const year = (req.query.year === "" || req.query.year === "All" )  ? {} : {year:{$eq: `${req.query.year}`}}; 
         const month = (req.query.month === "" || req.query.month === "All") ? {} : {month:{$regex: `${req.query.month}`, $options: "i"}} ; 
        
-        console.log(req.query)
+      
         fpCollection.find({
             $and: [name, union, unit, year, month]
         }).toArray((err, documents ) => {
