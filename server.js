@@ -105,6 +105,12 @@ client.connect(err => {
             res.send(documents)
         })    
     })
+    app.delete('/amountDelete/:id', (req, res) => {
+        const id = req.params.id;
+        amountCollection.deleteOne({_id: ObjectId(id)}).then(result => {
+            res.send(result.deletedCount > 0)           
+        })
+    })
 
     app.delete('/userDelete/:id', (req, res) => {
         const id = req.params.id;        
@@ -208,27 +214,24 @@ client.connect(err => {
         const name = (req.query.name === "" || req.query.name === "All") ? {} :{name:{$regex: `${req.query.name}`, $options: "i"}}; 
         const union =  (req.query.union == "") ? {} : {union:{$regex: `${req.query.union}`, $options: "i"}}; 
         const unit = (req.query.unit === "" || req.query.unit === "All") ? {} : {unit:{$regex: `${req.query.unit}`, $options: "i"}}; 
-        const year = (req.query.year === "")  ? {} : {year:{$eq: `${req.query.year}`}}; 
+        const year = (req.query.year === "" || req.query.year === "All" )  ? {} : {year:{$eq: `${req.query.year}`}}; 
         const month = (req.query.month === "" || req.query.month === "All") ? {} : {month:{$regex: `${req.query.month}`, $options: "i"}} ; 
        
-      
+        console.log(req.query)
         fpCollection.find({
             $and: [name, union, unit, year, month]
         }).toArray((err, documents ) => {
             if(err ) {
                 res.status(400).send(' message: Server error Occurs')
             }
-
             res.send(documents);
-        }) 
-        
+        })      
        
    })
-   
-});
 
 
 
+})
 
 app.get('/', (req, res) => {
     res.json({massage: 'Ya Allah , forgive me'})
