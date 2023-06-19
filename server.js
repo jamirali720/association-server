@@ -210,12 +210,12 @@ client.connect(err => {
    })
 
    
-    app.get('/filter', (req, res) => {       
-        const name = (req.query.name === "" || req.query.name === "All") ? {} :{name:{$regex: `${req.query.name}`, $options: "i"}}; 
-        const union =  (req.query.union == "") ? {} : {union:{$regex: `${req.query.union}`, $options: "i"}}; 
-        const unit = (req.query.unit === "" || req.query.unit === "All") ? {} : {unit:{$regex: `${req.query.unit}`, $options: "i"}}; 
-        const year = (req.query.year === "" || req.query.year === "All" )  ? {} : {year:{$eq: `${req.query.year}`}}; 
-        const month = (req.query.month === "" || req.query.month === "All") ? {} : {month:{$regex: `${req.query.month}`, $options: "i"}} ; 
+    app.get('/filter', (req, res) => {         
+        const name = {name:{$regex: `${req.query.name}`, $options: "i"}}; 
+        const union = {union:{$regex: `${req.query.union}`, $options: "i"}}; 
+        const unit ={unit:{$regex: `${req.query.unit}`, $options: "i"}}; 
+        const year = {year:{$eq: `${req.query.year}`}}; 
+        const month =( req.query.month === "" || req.query.month === "ALL") ? {} : {month:{$regex: `${req.query.month}`, $options: "i"}} ; 
        
       
         fpCollection.find({
