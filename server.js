@@ -25,7 +25,9 @@ client.connect((err) => {
   const adminCollection = client.db("association").collection("admin");
   const expenseCollection = client.db("association").collection("expense");
   const benefitCollection = client.db("association").collection("benefit");
-  const fpCollection = client.db("fp").collection("method");
+  // this is for madrasah collections
+  const dmCollection = client.db("madrasah").collection("donation");
+  const dmExpenseCollection = client.db("madrasah").collection("dmExpense");
 
   app.post("/addMember", async (req, res) => {
     const { name, email, phone, address, date, donation } = req.body;
@@ -192,7 +194,7 @@ client.connect((err) => {
   app.post("/addBenefitAmount", (req, res) => {
     const { name, voucher, amount, date } = req.body;
     benefitCollection
-      .insertOne({ name,  voucher,  amount,  date })
+      .insertOne({ name, voucher, amount, date })
       .then((result) => {
         console.log("benefit : ", result);
         res.send(result.acknowledged === true);
@@ -205,22 +207,25 @@ client.connect((err) => {
     });
   });
 
-
   app.delete("/deleteBenefitMoney/:id", (req, res) => {
-    benefitCollection.deleteOne({ _id: ObjectId(req.params.id) }).then((result) => {
-      if (result.deletedCount > 0) {
-        res.status(200).json({
-          success: true,
-          message: "You have deleted successfully",
-        });
-      }
-    });
+    benefitCollection
+      .deleteOne({ _id: ObjectId(req.params.id) })
+      .then((result) => {
+        if (result.deletedCount > 0) {
+          res.status(200).json({
+            success: true,
+            message: "You have deleted successfully",
+          });
+        }
+      });
   });
 
-
-  // family planning information
-  app.post("/office", async (req, res) => {
-    const result = await fpCollection.insertOne(req.body);
+  // dinina madrasah information
+  app.post("/collection", async (req, res) => {
+    const result = await dmCollection.insertOne({
+      ...req.body,
+      year: Number(req.body.year),
+    });
     if (result.acknowledged === true) {
       res.status(201).send({
         success: true,
@@ -229,8 +234,22 @@ client.connect((err) => {
     }
   });
 
-  app.get("/office", (req, res) => {
-    fpCollection.find({}).toArray((err, documents) => {
+  // GET all donar and search by their name,  phone, address, month, year, etc;
+  app.get("/search", (req, res) => {    )
+    const fullYear = new Date().getFullYear();
+    const keyword = req.query.keyword || "";
+    const year = Number(req.query.year) || fullYear;
+    const searchExp = new RegExp(".*" + keyword + ".*", "i");
+    let filter = {
+      year: { $eq: year },
+      $or: [
+        { name: { $regex: searchExp } },
+        { phone: { $regex: searchExp } },
+        { address: { $regex: searchExp } },
+        { month: { $regex: searchExp } },
+      ],
+    };
+    dmCollection.find(filter).toArray((err, documents) => {
       if (err) {
         res.status(400).send(" message: Server error Occurs");
       }
@@ -239,13 +258,15 @@ client.connect((err) => {
     });
   });
 
+  // GET Single donar by ID;
   app.get("/selected/:id", async (req, res) => {
-    const result = await fpCollection.findOne({ _id: ObjectId(req.params.id) });
+    const result = await dmCollection.findOne({ _id: ObjectId(req.params.id) });
     res.status(200).json({ result });
   });
 
-  app.patch("/update/:id", (req, res) => {
-    fpCollection
+  // Update single donar by their ID;
+  app.put("/update/:id", (req, res) => {
+    dmCollection
       .updateOne({ _id: ObjectId(req.params.id) }, { $set: req.body })
       .then((result) => {
         if (result.modifiedCount > 0) {
@@ -257,8 +278,9 @@ client.connect((err) => {
       });
   });
 
+  // Delete nay donar by ID;
   app.delete("/delete/:id", (req, res) => {
-    fpCollection.deleteOne({ _id: ObjectId(req.params.id) }).then((result) => {
+    dmCollection.deleteOne({ _id: ObjectId(req.params.id) }).then((result) => {
       if (result.deletedCount > 0) {
         res.status(200).json({
           success: true,
@@ -268,26 +290,63 @@ client.connect((err) => {
     });
   });
 
-  app.get("/filter", (req, res) => {
-    const name = { name: { $regex: `${req.query.name}`, $options: "i" } };
-    const union = { union: { $regex: `${req.query.union}`, $options: "i" } };
-    const unit = { unit: { $regex: `${req.query.unit}`, $options: "i" } };
-    const year = { year: { $eq: `${req.query.year}` } };
-    const month =
-      req.query.month === "" || req.query.month === "ALL"
-        ? {}
-        : { month: { $regex: `${req.query.month}`, $options: "i" } };
+  //GET all Donar;
+  app.get("/all-donars", (req, res) => {
+    dmCollection.find({}).toArray((err, documents) => {
+      if (err) {
+        res.status(400).send(" message: Server error Occurs");
+      }
+      res.send(documents);
+    });
+  });
 
-    fpCollection
-      .find({
-        $and: [name, union, unit, year, month],
-      })
-      .toArray((err, documents) => {
-        if (err) {
-          res.status(400).send(" message: Server error Occurs");
+  // Adding expense money;
+  app.post("/dmExpended", (req, res) => {
+    
+    dmExpenseCollection.insertOne({...req.body, amount: Number(req.body.amount),  voucher: Number(req.body.voucher)}).then((result) => {
+      res.send(result.acknowledged === true);
+    });
+  });
+
+  // GET all expense
+  app.get("/dmExpenseMoney", (req, res) => {
+    dmExpenseCollection.find({}).toArray((err, expenseArray) => {
+      res.send(expenseArray);
+    });
+  });
+
+  // GET Single expense by ID;
+  app.get("/single-expense/:id", async (req, res) => {
+    const result = await dmExpenseCollection.findOne({
+      _id: ObjectId(req.params.id),
+    });
+    res.status(200).json({ result });
+  });
+
+  // Update single donar by their ID;
+  app.put("/update-expense/:id", (req, res) => {
+    dmExpenseCollection
+      .updateOne({ _id: ObjectId(req.params.id) }, { $set: req.body })
+      .then((result) => {
+        if (result.modifiedCount > 0) {
+          res.status(200).json({
+            success: true,
+            message: "Updated successfully",
+          });
         }
-        res.send(documents);
       });
+  });
+
+  // delete expense amount
+  app.delete("/delete/:id", (req, res) => {
+    dmCollection.deleteOne({ _id: ObjectId(req.params.id) }).then((result) => {
+      if (result.deletedCount > 0) {
+        res.status(200).json({
+          success: true,
+          message: "You have deleted successfully",
+        });
+      }
+    });
   });
 });
 
