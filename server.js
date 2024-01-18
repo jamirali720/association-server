@@ -28,6 +28,7 @@ client.connect((err) => {
   // this is for madrasah collections
   const dmCollection = client.db("madrasah").collection("donation");
   const dmExpenseCollection = client.db("madrasah").collection("dmExpense");
+  const dmCashierCollection = client.db("madrasah").collection("cashier");
 
   app.post("/addMember", async (req, res) => {
     const { name, email, phone, address, date, donation } = req.body;
@@ -235,7 +236,7 @@ client.connect((err) => {
   });
 
   // GET all donar and search by their name,  phone, address, month, year, etc;
-  app.get("/search", (req, res) => {    )
+  app.get("/search", (req, res) => {    
     const fullYear = new Date().getFullYear();
     const keyword = req.query.keyword || "";
     const year = Number(req.query.year) || fullYear;
@@ -346,6 +347,21 @@ client.connect((err) => {
           message: "You have deleted successfully",
         });
       }
+    });
+  });
+
+  // adding cashier
+  app.post("/addCashier", (req, res) => {
+    const email = req.body.email;
+    dmCashierCollection.insertOne({ email }).then((result) => {
+      res.send(result.insertedCount > 0);
+    });
+  });
+
+  app.get("/isCashier/:email", (req, res) => {  
+    const email = req.params.email;      
+    dmCashierCollection.find({ email: email }).toArray((err, cashier) => {
+      res.send(cashier?.length > 0);
     });
   });
 });
