@@ -339,8 +339,8 @@ client.connect((err) => {
   });
 
   // delete expense amount
-  app.delete("/delete/:id", (req, res) => {
-    dmCollection.deleteOne({ _id: ObjectId(req.params.id) }).then((result) => {
+  app.delete("/dmExpense-delete/:id", (req, res) => {
+    dmExpenseCollection.deleteOne({ _id: ObjectId(req.params.id) }).then((result) => {
       if (result.deletedCount > 0) {
         res.status(200).json({
           success: true,
