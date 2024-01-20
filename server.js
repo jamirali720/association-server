@@ -29,6 +29,7 @@ client.connect((err) => {
   const dmCollection = client.db("madrasah").collection("donation");
   const dmExpenseCollection = client.db("madrasah").collection("dmExpense");
   const dmCashierCollection = client.db("madrasah").collection("cashier");
+  const dmContentCollection = client.db("madrasah").collection("content");
 
   app.post("/addMember", async (req, res) => {
     const { name, email, phone, address, date, donation } = req.body;
@@ -226,6 +227,7 @@ client.connect((err) => {
     const result = await dmCollection.insertOne({
       ...req.body,
       year: Number(req.body.year),
+      amount: Number(req.body.amount),
     });
     if (result.acknowledged === true) {
       res.status(201).send({
@@ -236,7 +238,7 @@ client.connect((err) => {
   });
 
   // GET all donar and search by their name,  phone, address, month, year, etc;
-  app.get("/search", (req, res) => {    
+  app.get("/search", (req, res) => {
     const fullYear = new Date().getFullYear();
     const keyword = req.query.keyword || "";
     const year = Number(req.query.year) || fullYear;
@@ -303,10 +305,15 @@ client.connect((err) => {
 
   // Adding expense money;
   app.post("/dmExpended", (req, res) => {
-    
-    dmExpenseCollection.insertOne({...req.body, amount: Number(req.body.amount),  voucher: Number(req.body.voucher)}).then((result) => {
-      res.send(result.acknowledged === true);
-    });
+    dmExpenseCollection
+      .insertOne({
+        ...req.body,
+        amount: Number(req.body.amount),
+        voucher: Number(req.body.voucher),
+      })
+      .then((result) => {
+        res.send(result.acknowledged === true);
+      });
   });
 
   // GET all expense
@@ -340,14 +347,16 @@ client.connect((err) => {
 
   // delete expense amount
   app.delete("/dmExpense-delete/:id", (req, res) => {
-    dmExpenseCollection.deleteOne({ _id: ObjectId(req.params.id) }).then((result) => {
-      if (result.deletedCount > 0) {
-        res.status(200).json({
-          success: true,
-          message: "You have deleted successfully",
-        });
-      }
-    });
+    dmExpenseCollection
+      .deleteOne({ _id: ObjectId(req.params.id) })
+      .then((result) => {
+        if (result.deletedCount > 0) {
+          res.status(200).json({
+            success: true,
+            message: "You have deleted successfully",
+          });
+        }
+      });
   });
 
   // adding cashier
@@ -358,11 +367,62 @@ client.connect((err) => {
     });
   });
 
-  app.get("/isCashier/:email", (req, res) => {  
-    const email = req.params.email;      
+  // check isCashier
+  app.get("/isCashier/:email", (req, res) => {
+    const email = req.params.email;
     dmCashierCollection.find({ email: email }).toArray((err, cashier) => {
       res.send(cashier?.length > 0);
     });
+  });
+
+  // adding content
+  app.post("/add-content", (req, res) => {
+    dmContentCollection.insertOne(req.body).then((result) => {
+      res.send(result.acknowledged === true);
+    });
+  });
+
+  // GET all contents
+  app.get("/all-contents", (req, res) => {
+    dmContentCollection.find({}).toArray((err, expenseArray) => {
+      res.send(expenseArray);
+    });
+  });
+
+  // GET Single content by ID;
+  app.get("/single-content/:id", async (req, res) => {
+    const result = await dmContentCollection.findOne({
+      _id: ObjectId(req.params.id),
+    });
+    res.status(200).json({ result });
+  });
+
+  // updating content
+  app.put("/update-content/:id", (req, res) => {
+    dmContentCollection
+      .updateOne({ _id: ObjectId(req.params.id) }, { $set: req.body })
+      .then((result) => {
+        if (result.modifiedCount > 0) {
+          res.status(200).json({
+            success: true,
+            message: "Updated successfully",
+          });
+        }
+      });
+  });
+
+  // delete content
+  app.delete("/delete-content/:id", (req, res) => {
+    dmContentCollection
+      .deleteOne({ _id: ObjectId(req.params.id) })
+      .then((result) => {
+        if (result.deletedCount > 0) {
+          res.status(200).json({
+            success: true,
+            message: "You have deleted successfully",
+          });
+        }
+      });
   });
 });
 
