@@ -243,6 +243,8 @@ client.connect((err) => {
     const keyword = req.query.keyword || "";
     const year = Number(req.query.year) || fullYear;
     const searchExp = new RegExp(".*" + keyword + ".*", "i");
+
+
     let filter = {
       year: { $eq: year },
       $or: [
@@ -268,9 +270,21 @@ client.connect((err) => {
   });
 
   // Update single donar by their ID;
-  app.put("/update/:id", (req, res) => {
+  app.put("/update/:id", (req, res) => {   
     dmCollection
-      .updateOne({ _id: ObjectId(req.params.id) }, { $set: req.body })
+      .updateOne(
+        { _id: ObjectId(req.params.id) },
+        {
+          $set: {
+            name: req.body.name, 
+            address: req.body.address, 
+            phone: req.body.phone,
+            year: Number(req.body.year),
+            month: req.body.month,
+            amount: Number(req.body.amount),
+          },
+        }
+      )
       .then((result) => {
         if (result.modifiedCount > 0) {
           res.status(200).json({
